@@ -304,6 +304,23 @@ Mindstate supports a three-tier storage model:
 
 Use `PromotionTierPolicy` for automatic tier selection, or implement the `TierPolicy` interface for custom logic.
 
+## Deployed Contracts (Base Mainnet)
+
+The protocol is live on [Base](https://base.org) (chain ID 8453).
+
+```ts
+import { DEPLOYMENTS } from '@mindstate/sdk';
+const { factory, vault, implementation } = DEPLOYMENTS[8453];
+```
+
+| Contract | Address |
+|----------|---------|
+| **MindstateLaunchFactory** | [`0x866B4b99be3847a9ed6Db6ce0a02946B839b735A`](https://basescan.org/address/0x866B4b99be3847a9ed6Db6ce0a02946B839b735A) |
+| **MindstateVault** | [`0xC5B2Dc478e75188a454e33E89bc4F768c7079068`](https://basescan.org/address/0xC5B2Dc478e75188a454e33E89bc4F768c7079068) |
+| **FeeCollector** | [`0x19175b230dfFAb8da216Ae29f9596Ac349755D16`](https://basescan.org/address/0x19175b230dfFAb8da216Ae29f9596Ac349755D16) |
+| **MindstateToken** (impl) | [`0x69511A29958867A96D28a15b3Ac614D1e8A4c47B`](https://basescan.org/address/0x69511A29958867A96D28a15b3Ac614D1e8A4c47B) |
+| **MindstateFactory** | [`0x8c67b8ff38f4F497c8796AC28547FE93D1Ce1C97`](https://basescan.org/address/0x8c67b8ff38f4F497c8796AC28547FE93D1Ce1C97) |
+
 ## Community
 
 - [Website](https://mindstate.dev)
