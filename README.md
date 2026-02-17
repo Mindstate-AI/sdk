@@ -115,6 +115,20 @@ const { capsule, checkpoint } = await client.consume(
 console.log('Decrypted capsule:', capsule.payload);
 ```
 
+## Examples
+
+### On-Chain Auto-Fulfillment Watcher
+
+A local script that watches for redemptions and automatically delivers keys on-chain. Run it yourself — no servers, no IPFS. Full setup guide: [examples/README.md](./examples/README.md)
+
+```bash
+cd sdk && npx tsx examples/auto-fulfiller-onchain.ts
+```
+
+Requires: `MINDSTATE_TOKEN`, `RPC_URL`, `PUBLISHER_KEY`, `PUBLISHER_X25519`, and a `.mindstate-keys.json` file mapping checkpoint IDs to content keys.
+
+---
+
 ## Core Concepts
 
 | Concept | Description |
