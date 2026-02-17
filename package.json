@@ -1,0 +1,75 @@
+{
+  "name": "@mindstate/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "TypeScript SDK for the Mindstate protocol — publish, consume, and verify encrypted AI state on Ethereum",
+  "author": "Mindstate Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mindstate-AI/sdk.git"
+  },
+  "homepage": "https://github.com/Mindstate-AI/sdk#readme",
+  "bugs": {
+    "url": "https://github.com/Mindstate-AI/sdk/issues"
+  },
+  "keywords": [
+    "mindstate",
+    "ethereum",
+    "erc20",
+    "ai",
+    "agent",
+    "state",
+    "encryption",
+    "capsule",
+    "checkpoint",
+    "web3",
+    "ipfs",
+    "arweave",
+    "filecoin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "prepublishOnly": "npm run clean && npm run build && npm test",
+    "test": "vitest run --exclude src/__tests__/integration.test.ts --exclude src/__tests__/integration-onchain.test.ts",
+    "test:integration": "vitest run src/__tests__/integration.test.ts --testTimeout=60000",
+    "test:integration:onchain": "vitest run src/__tests__/integration-onchain.test.ts --testTimeout=60000"
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.4.0",
+    "canonicalize": "^2.0.0",
+    "tweetnacl": "^1.0.3"
+  },
+  "peerDependencies": {
+    "ethers": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ethers": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ethers": "^6.13.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.18"
+  }
+}
