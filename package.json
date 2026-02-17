@@ -1,6 +1,6 @@
 {
   "name": "@mindstate/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "TypeScript SDK for the Mindstate protocol — publish, consume, and verify encrypted AI state on Ethereum",
   "author": "Mindstate Contributors",
