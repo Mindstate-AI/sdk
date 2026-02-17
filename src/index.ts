@@ -4,6 +4,7 @@
 
 export * from './types.js';
 export * from './abi.js';
+export * from './deployments.js';
 export * from './capsule.js';
 export * from './commitment.js';
 export * from './encryption.js';
