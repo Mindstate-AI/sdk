@@ -7,9 +7,15 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![GitHub stars](https://img.shields.io/github/stars/Mindstate-AI/sdk)](https://github.com/Mindstate-AI/sdk)
 
-TypeScript SDK for the **Mindstate protocol** — publish, consume, and verify encrypted AI state on Ethereum.
+TypeScript SDK for the **Mindstate protocol** — seal, publish, consume, and verify encrypted AI state.
 
-Mindstate lets AI agents (or any publisher) commit versioned, encrypted state snapshots ("capsules") on-chain as ERC-20 tokens. Consumers burn tokens to redeem access to decrypted state. The protocol is schema-agnostic: capsules can hold agent identity, model weights, conversation logs, memory, or anything else.
+Mindstate lets any publisher — human or agent — create versioned, encrypted state snapshots ("capsules") with cryptographic integrity guarantees. The SDK supports three tiers of usage, all sharing the same capsule format, encryption, and storage:
+
+| Tier | Chain | Token | Access Control | Entry Point |
+|------|-------|-------|----------------|-------------|
+| **SDK-only (Sealed)** | None | No | Out-of-band key sharing | `seal()` / `unseal()` |
+| **Registry** | On-chain commitments | No | Allowlist or open | `MindstateRegistryClient` |
+| **Token (ERC-3251)** | On-chain commitments | ERC-20 | Burn-to-redeem market | `MindstateClient` |
 
 ## Install
 
@@ -25,7 +31,68 @@ npm install ethers
 
 ## Quick Start
 
-### 1. Create a client
+### Tier 1: Sealed Mode (No Chain)
+
+The simplest path. Encrypt a capsule and share the key directly — no blockchain interaction at all.
+
+```ts
+import { createCapsule, seal, unseal, sealAndUpload, downloadAndUnseal, IpfsStorage } from '@mindstate/sdk';
+
+// Create and seal
+const capsule = createCapsule({ model: 'gpt-4o', memory: ['...'] });
+const sealed = seal(capsule);
+
+// Upload ciphertext (optional — works with any StorageProvider)
+const storage = new IpfsStorage({ gateway: 'https://ipfs.io' });
+const { uri, receipt } = await sealAndUpload(capsule, storage);
+
+// Share the key however you want: DM, API, QR code, file...
+const keyHex = Buffer.from(sealed.encryptionKey).toString('hex');
+
+// Recipient decrypts and verifies
+const restored = await downloadAndUnseal(uri, sealed.encryptionKey, storage);
+```
+
+For key wrapping to a specific recipient:
+
+```ts
+import { seal, wrapKeyForRecipient, unwrapKeyFromEnvelope, generateEncryptionKeyPair } from '@mindstate/sdk';
+
+const sender = generateEncryptionKeyPair();
+const recipient = generateEncryptionKeyPair();
+
+const sealed = seal(capsule);
+const envelope = wrapKeyForRecipient(sealed.encryptionKey, recipient.publicKey, sender.secretKey);
+// Send envelope to recipient via any channel...
+const key = unwrapKeyFromEnvelope(envelope, recipient.secretKey);
+```
+
+### Tier 2: Registry (On-Chain Ledger, No Token)
+
+On-chain commitments and verifiable continuity, but no ERC-20. Access via publisher-managed allowlist.
+
+```ts
+import { MindstateRegistryClient, RegistryAccessMode, createCapsule, IpfsStorage } from '@mindstate/sdk';
+
+const client = new MindstateRegistryClient({ registryAddress: '0x...', provider, signer });
+const storage = new IpfsStorage({ gateway: 'https://ipfs.io' });
+
+// Create a stream — you're the publisher
+const streamId = await client.createStream('My Agent State', RegistryAccessMode.Allowlist);
+
+// Grant access
+await client.addReader(streamId, '0xAlice...');
+
+// Publish — same capsule format, same encryption as the token path
+const capsule = createCapsule({ weights: '...', config: { temperature: 0 } });
+const { checkpointId } = await client.publish(streamId, capsule, { storage });
+```
+
+### Tier 3: Token (ERC-3251)
+
+The flagship path with full ERC-20 burn-to-redeem and DeFi composability.
+
+#### 1. Create a client
 
 ```ts
 import { ethers } from 'ethers';
@@ -145,9 +212,29 @@ Requires: `MINDSTATE_TOKEN`, `RPC_URL`, `PUBLISHER_KEY`, `PUBLISHER_X25519`, and
 
 ### Classes
 
+#### `MindstateRegistryClient`
+
+High-level client for the standalone MindstateRegistry (no token, no burn-to-redeem).
+
+| Method | Description |
+|--------|-------------|
+| `createStream(name, accessMode)` | Create a new checkpoint stream. |
+| `publish(streamId, capsule, options)` | Full flow: serialize, encrypt, upload, publish. |
+| `consume(streamId, checkpointId, options)` | Download, decrypt, verify. No burn step. |
+| `addReader(streamId, reader)` | Grant access to an address. |
+| `removeReader(streamId, reader)` | Revoke access. |
+| `addReaders(streamId, readers)` | Batch grant access. |
+| `isReader(streamId, account)` | Check access status. |
+| `getHead(streamId)` | Latest checkpoint ID. |
+| `getTimeline(streamId)` | Full checkpoint history. |
+| `tagCheckpoint(streamId, checkpointId, tag)` | Tag a checkpoint. |
+| `resolveTag(streamId, tag)` | Resolve tag to checkpoint ID. |
+| `getStream(streamId)` | Get stream metadata. |
+| `getPublisherStreams(publisher)` | List publisher's streams. |
+
 #### `MindstateClient`
 
-High-level client for interacting with MindstateToken contracts.
+High-level client for interacting with MindstateToken contracts (ERC-3251).
 
 | Method | Description |
 |--------|-------------|
@@ -228,6 +315,15 @@ interface StorageProvider {
 | `PromotionTierPolicy` | Auto-promotes to warm/cold based on labels and tags. |
 
 ### Standalone Functions
+
+#### Sealed Mode (Off-Chain)
+
+- `seal(capsule, metadata?)` — Serialize, commit, and encrypt a capsule. Returns `SealedCapsule` with ciphertext and key K.
+- `unseal(ciphertext, key, stateCommitment?, ciphertextHash?)` — Decrypt and optionally verify a sealed capsule.
+- `sealAndUpload(capsule, storage, metadata?)` — Seal + upload ciphertext to storage. Returns sealed capsule, URI, and receipt.
+- `downloadAndUnseal(uri, key, storage, stateCommitment?, ciphertextHash?)` — Download from storage + unseal.
+- `wrapKeyForRecipient(contentKey, recipientPubKey, senderSecretKey)` — Wrap K for a specific recipient via NaCl box.
+- `unwrapKeyFromEnvelope(envelope, recipientSecretKey)` — Unwrap K from a key envelope.
 
 #### Capsule Construction
 
